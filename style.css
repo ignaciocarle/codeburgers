@@ -55,13 +55,22 @@ main {
   flex-direction: column;
   align-items: center;
 }
-.card>*{
+.card > * {
   margin: 0.5rem;
+  text-align: center;
 }
+
+.card > button {
+  margin-top: auto;
+}
+
+/*.card > p {
+  text-align: start;
+}*/
 
 /*TESTING*/
 
-.tb1{
+.tb1 {
   border: red dashed 2px;
 }
 
