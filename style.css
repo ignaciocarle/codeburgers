@@ -1,0 +1,70 @@
+* {margin: 0px;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+  
+HTML {
+  background-color: aliceblue;
+}
+
+
+
+.header {
+  margin-bottom: 1.5rem;
+  padding: 1rem 15%+1.5rem;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  background-color: cornflowerblue;
+}
+
+.header>* {
+  color: aliceblue;
+}
+
+.title {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.cart-btn {
+  background: none;
+  border: aliceblue solid 3px;
+  border-radius: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+main {
+  padding: 1.5rem 15%;
+}
+
+.shop {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+}
+
+.card {
+  padding: 2rem;
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.card>*{
+  margin: 0.5rem;
+}
+
+/*TESTING*/
+
+.tb1{
+  border: red dashed 2px;
+}
+
+.tb2 {
+  border: green dashed 2px;
+}
