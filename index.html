@@ -1,21 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Codeburgers</title>
 
-    <link rel="stylesheet" href="./style.css" />
-    <script defer src="./app.js"></script>
-  </head>
-  <body>
-    <header class="header">
-      <h1 class="title">Codeburgers</h1>
-      <button class="cart-btn">Cart 🛒</button>
-    </header>
-    <main>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codeburgers</title>
+
+  <link rel="stylesheet" href="./style.css" />
+  <script defer src="./app.js"></script>
+</head>
+
+<body>
+  <header class="header">
+    <h1 class="title">🍔Codeburgers</h1>
+    <button class="btn-primary cart-btn">Carrito 🛒</button>
+  </header>
+
+  <main>
+    <div class="flex-col-center">
       <div class="shop" id="shop"></div>
-    </main>
-  </body>
+      <button class="btn-primary" onclick="init()">INICIÁ TU PEDIDO AQUÍ 📝</button>
+
+      <div id="order-ticket" class="order-ticket textfield hidden"></div>
+
+    </div>
+  </main>
+</body>
+
 </html>
