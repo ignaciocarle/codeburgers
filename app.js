@@ -1,9 +1,41 @@
+/*
+
+  CLASES
+*/
+class Product {
+  constructor(id, title, description, price, qty = 0) {
+    this.id = id;
+    this.title = title;
+    this.description = description;
+    this.price = price;
+    this.qty = qty;
+  }
+}
+
+class Order {
+  constructor(productsIdList) {
+    this.productsIdList = productsIdList;
+    this.productsList = this.productsIdList.map(this.getProductById);
+    this.amount = this.sumAmount();
+  }
+
+  getProductById(id) {
+    return products.list.find((product) => product.id === id);
+  }
+
+  sumAmount() {
+    return this.productsIdList.reduce(
+      (acc, cur) => acc + products.list[cur].price,
+      0
+    );
+  }
+}
+
 /* 
 
   BASE DE DATOS
   Simula ser la API de una base de datos
 */
-
 const products = {
   list: [
     {
@@ -37,9 +69,15 @@ const products = {
       stock: 0,
     },
   ],
+  checkStock(id) {
+    return this.list[id].stock >= 1;
+  },
   updateStock(id, value) {
     const product = this.list.find((ele) => ele.id === id);
     product.stock += value;
+  },
+  getProductById(id) {
+    return this.list.find((product) => product.id === id);
   },
 };
 
@@ -50,21 +88,24 @@ const msg = {
   invalidInput: "Entrada incorrecta por favor intenta de nuevo",
   addMore: "Desea añadir otro producto?",
   empty: "Tu pedido está vacío.",
-  addProduct() {
-    let memo = nl + nl;
-    stock.map(({ id, title, price }) => {
-      const line = "  " + (id + 1) + " - " + title + "$ " + price + nl;
-      memo += line;
-    });
-    const msg = `Ingresá el número para agregar un producto:${memo}`;
-    return msg;
-  },
+  noStock: "No tenemos stock de este producto",
 };
+
+/* 
+
+  VARIABLES GLOBALES
+*/
+const nl = `
+`;
 
 /* 
 
   ESTADO
 */
+
+const state = {
+  cart: new Order([]),
+};
 const cart = {
   products: [],
   total: 0,
@@ -76,56 +117,20 @@ const cart = {
 */
 const $shop = document.getElementById("shop");
 const $orderTicket = document.getElementById("order-ticket");
-
-/*
-
-  CLASES
-*/
-class Product {
-  constructor(id, title, description, price, qty = 0) {
-    this.id = id;
-    this.title = title;
-    this.description = description;
-    this.price = price;
-    this.qty = qty;
-  }
-}
-
-class Order {
-  constructor(productsIdList) {
-    this.productsIdList = productsIdList;
-    this.productsList = this.productsIdList.map(this.getProductById);
-    this.amount = this.sumAmount();
-  }
-
-  getProductById(id) {
-    return stock.find((product) => product.id === id);
-  }
-
-  sumAmount() {
-    return this.productsIdList.reduce((acc, cur) => acc + stock[cur].price, 0);
-  }
-}
-
-/* 
-
-  VARIABLES GLOBALES
-*/
-const nl = `
-`;
-let stock = [];
+const $cartBtn = document.getElementById("cart-btn");
 
 /*
 
   FUNCIONES DE RENDERIZADO
 */
+
 const renderShop = () => {
-  stock.forEach((product) => {
+  products.list.forEach((product) => {
     $shop.appendChild(cardTemplate(product));
   });
 };
 
-const cardTemplate = ({ title, description, price }) => {
+const cardTemplate = ({ id, title, description, price }) => {
   const card = document.createElement("article");
   card.classList.add("card", "textfield");
   const elements = `
@@ -133,20 +138,21 @@ const cardTemplate = ({ title, description, price }) => {
     <h3>${title}</h3>
     <p>${description}</p>
     <h4>$ ${price}</h4>
+    <a href="" id="${id}" class="add-btn btn-primary">Añadir al carrito</a>
   </div>
-    `;
-  //<button>Añadir al carrito</button>
+  `;
   card.innerHTML = elements;
   return card;
 };
 
-const printTicket = (order) => {
+const renderOrder = (order) => {
   $orderTicket.innerHTML = "";
-  $orderTicket.appendChild(ticketTemplate(order));
+  $orderTicket.appendChild(orderTemplate(order));
   $orderTicket.classList.remove("hidden");
+  $cartBtn.textContent = `$ ${order.amount} 🛒`;
 };
 
-const ticketTemplate = ({ productsList, amount }) => {
+const orderTemplate = ({ productsList, amount }) => {
   const ticket = document.createElement("div");
   const detail = detailTemplate(productsList);
   const content = `
@@ -165,15 +171,19 @@ const detailTemplate = (productsList) => {
   list.classList.add("detail-table");
   const listHeader = document.createElement("tr");
   listHeader.innerHTML = `
+  <th>#</th>
   <th>Producto</th>
   <th>Precio</th>
+  <th></th>
   `;
   list.appendChild(listHeader);
-  productsList.forEach((product) => {
+  productsList.forEach((product, index) => {
     const row = document.createElement("tr");
     row.innerHTML = `
+    <td>${index + 1}</td>
     <td>${product.title}</td>
     <td>$ ${product.price}</td
+    <td><a href="" class="remove-cart-btn" data-row="${index}">❌</td
     `;
     list.appendChild(row);
   });
@@ -184,76 +194,65 @@ const detailTemplate = (productsList) => {
 
   FUNCIONES OPERATIVAS
 */
-const syncStock = () => {
-  stock = products.list
-    .filter((product) => product.stock >= 1)
-    .map(
-      ({ id, title, description, price }) =>
-        new Product(id, title, description, price)
-    );
-};
 
-const init = () => {
-  console.log("Inicializado");
-  if (!confirm(msg.welcome)) {
-    console.log("Rebotado");
-    alert(msg.bounce);
+const addToCart = (id) => {
+  if (!products.checkStock(id)) {
+    alert(msg.noStock);
     return;
   }
-
-  const order = takeOrder();
-  if (order.productsIdList.length <= 0) {
-    alert(msg.empty);
-    return;
-  }
-  printTicket(order);
-  alert(msg.dismiss);
+  const newOrder = new Order([...state.cart.productsIdList, id]);
+  products.updateStock(id, -1);
+  updateCart(newOrder);
+  console.log(`Añadido al carrito: ${products.getProductById(id).title}`);
 };
 
-const takeOrder = () => {
-  console.log("Tomando pedido");
-  const productsIdList = [];
+const removeFromCart = (row) => {
+  const idList = state.cart.productsIdList.map((e) => e);
+  const id = idList[row];
+  if (idList[row] === undefined) return;
 
-  do {
-    const newProduct = addProduct();
-    if (newProduct !== undefined) productsIdList.push(newProduct);
-    console.log(`productIdList actualizado:`);
-    console.log(productsIdList);
-  } while (confirm(msg.addMore));
-
-  const newOrder = new Order(productsIdList);
-  console.log("Nueva orden creada:");
-  console.log(newOrder);
-  return newOrder;
+  idList.splice(row, 1);
+  const newOrder = new Order(idList);
+  products.updateStock(id, 1);
+  updateCart(newOrder);
+  console.log(`Eliminado del carrito: ${products.getProductById(id).title}`);
 };
 
-/* addProduct devuelve un Id de producto del stock o pide input,
-con cancel se devuelve el control a la función de mayor orden
+const updateCart = (order) => {
+  state.cart = order;
+  renderOrder(order);
+};
+
+/* 
+
+  LISTENERS
 */
-const addProduct = () => {
-  const userInput = prompt(msg.addProduct());
-
-  if (userInput === null) return;
-
-  const newProduct = stock.find(
-    (product) => product.id + 1 === parseInt(userInput)
-  );
-
-  if (!newProduct) {
-    alert(msg.invalidInput);
-    return addProduct();
+$shop.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (e.target.classList.contains("add-btn")) {
+    const id = parseInt(e.target.getAttribute("id"));
+    addToCart(id);
   }
+});
 
-  console.log(`Producto elegido: ${newProduct.id + 1}`);
-  return newProduct.id;
-};
+$orderTicket.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (e.target.classList.contains("remove-cart-btn")) {
+    const rowId = parseInt(e.target.getAttribute("data-row"));
+    removeFromCart(rowId);
+  }
+});
+
+$cartBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  console.log(state.cart);
+});
 
 /* 
 
   ZONA DE EJECUCIÓN INICIAL
 */
 
-syncStock();
 renderShop();
 
 /*
@@ -261,8 +260,8 @@ renderShop();
 TESTING
 */
 
-/* 
 console.log("---------------------TESTING--------------------");
+/* 
 const testOrder = new Order([0, 2, 1, 2]);
 console.log(testOrder);
 

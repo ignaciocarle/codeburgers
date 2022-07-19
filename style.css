@@ -15,6 +15,10 @@
   color: var(--primary-1000);
 }
 
+a {
+  text-decoration: none;
+}
+
 /* ELEMENTS */
 
 HTML {
@@ -50,7 +54,6 @@ main {
   border-radius: 1rem;
 
   color: var(--highlight-800);
-  font-size: 24px;
   font-weight: 600;
 }
 
@@ -86,6 +89,7 @@ main {
 }
 
 .cart-btn {
+  font-size: 24px;
   border-color: var(--highlight-800);
 }
 
@@ -121,6 +125,7 @@ main {
 }
 
 .detail-table {
+  width: 100%;
   border-collapse: collapse;
 }
 
