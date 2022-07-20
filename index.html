@@ -14,15 +14,23 @@
 <body>
   <header class="header">
     <h1 class="title">🍔Codeburgers</h1>
-    <a href="" id="cart-btn" class="btn-primary cart-btn">Carrito 🛒</a>
+    <a href="" id="cart-btn" class="btn-primary cart-btn">$ 0 🛒</a>
   </header>
 
   <main>
+    <div id="modal" class="modal ">
+      <div id="modal-content" class="modal-content textfield">
+        <div class="order-ticket">
+          <h2>Tu pedido:</h2>
+          <h2>$ ${amount} </h2>
+          <a href="" id="buy-btn" class="buy-btn btn-primary">Pagar💰</a>
+          <h3>Detalle:</h3>
+        </div>
+      </div>
+    </div>
+    </div>
     <div class="flex-col-center">
       <div class="shop" id="shop"></div>
-      <button id="init-btn" class="btn-primary">INICIÁ TU PEDIDO AQUÍ 📝</button>
-      <div id="order-ticket" class="order-ticket textfield hidden"></div>
-
     </div>
   </main>
 </body>

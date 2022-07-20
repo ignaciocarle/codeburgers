@@ -73,7 +73,7 @@ const products = {
     return this.list[id].stock >= 1;
   },
   updateStock(id, value) {
-    const product = this.list.find((ele) => ele.id === id);
+    const product = this.getProductById(id);
     product.stock += value;
   },
   getProductById(id) {
@@ -88,7 +88,11 @@ const msg = {
   invalidInput: "Entrada incorrecta por favor intenta de nuevo",
   addMore: "Desea añadir otro producto?",
   empty: "Tu pedido está vacío.",
-  noStock: "No tenemos stock de este producto",
+  noStock: "No nos queda stock de este producto",
+  deliver(amount) {
+    return `Son $${amount}, disfrute su comida.
+    ${this.dismiss}`;
+  },
 };
 
 /* 
@@ -106,18 +110,15 @@ const nl = `
 const state = {
   cart: new Order([]),
 };
-const cart = {
-  products: [],
-  total: 0,
-};
 
 /* 
 
   ELEMENTOS DEL DOM
 */
-const $shop = document.getElementById("shop");
-const $orderTicket = document.getElementById("order-ticket");
+const $modal = document.getElementById("modal");
+const $modalContent = document.getElementById("modal-content");
 const $cartBtn = document.getElementById("cart-btn");
+const $shop = document.getElementById("shop");
 
 /*
 
@@ -146,24 +147,25 @@ const cardTemplate = ({ id, title, description, price }) => {
 };
 
 const renderOrder = (order) => {
-  $orderTicket.innerHTML = "";
-  $orderTicket.appendChild(orderTemplate(order));
-  $orderTicket.classList.remove("hidden");
+  $modalContent.innerHTML = "";
+  $modalContent.appendChild(orderTemplate(order));
   $cartBtn.textContent = `$ ${order.amount} 🛒`;
 };
 
 const orderTemplate = ({ productsList, amount }) => {
-  const ticket = document.createElement("div");
-  const detail = detailTemplate(productsList);
+  const orderTemplate = document.createElement("div");
+  orderTemplate.classList.add("order-ticket");
   const content = `
     <h2>Tu pedido:</h2>
     <h2>$ ${amount} </h2>
-    <hr>
+    <a href="" id="buy-btn" class="buy-btn btn-primary">Pagar💰</a>
     <h3>Detalle:</h3>
   `;
-  ticket.innerHTML = content;
-  ticket.appendChild(detail);
-  return ticket;
+
+  orderTemplate.innerHTML = content;
+  orderTemplate.appendChild(detailTemplate(productsList));
+
+  return orderTemplate;
 };
 
 const detailTemplate = (productsList) => {
@@ -202,7 +204,7 @@ const addToCart = (id) => {
   }
   const newOrder = new Order([...state.cart.productsIdList, id]);
   products.updateStock(id, -1);
-  updateCart(newOrder);
+  updateCartState(newOrder);
   console.log(`Añadido al carrito: ${products.getProductById(id).title}`);
 };
 
@@ -214,19 +216,48 @@ const removeFromCart = (row) => {
   idList.splice(row, 1);
   const newOrder = new Order(idList);
   products.updateStock(id, 1);
-  updateCart(newOrder);
+  updateCartState(newOrder);
   console.log(`Eliminado del carrito: ${products.getProductById(id).title}`);
 };
 
-const updateCart = (order) => {
+const updateCartState = (order) => {
   state.cart = order;
   renderOrder(order);
+};
+
+const deliverOrder = (order) => {
+  const amount = order.amount;
+  if (amount <= 0) {
+    alert(msg.empty);
+    return;
+  }
+  alert(msg.deliver(amount));
+  updateCartState(new Order([]));
+  $modal.style.display = "none";
 };
 
 /* 
 
   LISTENERS
 */
+$modal.addEventListener("click", (e) => {
+  if (e.target == modal) {
+    $modal.style.display = "none";
+  }
+});
+
+$modalContent.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (e.target.classList.contains("remove-cart-btn")) {
+    const rowId = parseInt(e.target.getAttribute("data-row"));
+    removeFromCart(rowId);
+  }
+
+  if (e.target.id == "buy-btn") {
+    deliverOrder(state.cart);
+  }
+});
+
 $shop.addEventListener("click", (e) => {
   e.preventDefault();
   if (e.target.classList.contains("add-btn")) {
@@ -235,17 +266,13 @@ $shop.addEventListener("click", (e) => {
   }
 });
 
-$orderTicket.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (e.target.classList.contains("remove-cart-btn")) {
-    const rowId = parseInt(e.target.getAttribute("data-row"));
-    removeFromCart(rowId);
-  }
-});
-
 $cartBtn.addEventListener("click", (e) => {
   e.preventDefault();
-  console.log(state.cart);
+  if (state.cart.amount === 0) {
+    alert(msg.empty);
+    return;
+  }
+  $modal.style.display = "block";
 });
 
 /* 
