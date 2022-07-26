@@ -35,7 +35,7 @@ class Order {
   Simula ser la API de una base de datos
 */
 const products = {
-  list: [
+  list: JSON.parse(localStorage.getItem("products-list")) || [
     {
       id: 0,
       title: "Hamburguesa Basic Simple",
@@ -102,21 +102,11 @@ const nl = `
 
 /* 
 
-  STORAGE
-*/
-const ls = localStorage;
-
-const updLs = (key, value) => {
-  ls.setItem(key, value);
-};
-
-/* 
-
   ESTADO
 */
 
 const state = {
-  cart: JSON.parse(ls.getItem("cart")) || new Order([]),
+  cart: JSON.parse(localStorage.getItem("cart")) || new Order([]),
 };
 
 /* 
@@ -167,7 +157,7 @@ const orderTemplate = ({ productsList, amount }) => {
   orderTemplate.classList.add("order-ticket");
   const content = `
     <h2>Tu pedido:</h2>
-    <h2>$ ${amount} </h2>
+    <h2 id="order-price">$ ${amount} </h2>
     <a href="" id="buy-btn" class="buy-btn btn-primary">Pagar💰</a>
     <h3>Detalle:</h3>
   `;
@@ -232,7 +222,8 @@ const removeFromCart = (row) => {
 
 const updateCartState = (order) => {
   state.cart = order;
-  ls.setItem("cart", JSON.stringify(state.cart));
+  localStorage.setItem("cart", JSON.stringify(state.cart));
+  localStorage.setItem("products-list", JSON.stringify(products.list));
   renderOrder();
 };
 
@@ -286,7 +277,7 @@ $cartBtn.addEventListener("click", (e) => {
   $modal.style.display = "block";
 });
 
-document.addEventListener("DOMContentLoaded", (e) => {
+document.addEventListener("DOMContentLoaded", () => {
   renderShop();
   renderOrder(state.cart);
 });
