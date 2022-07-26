@@ -15,12 +15,10 @@ class Product {
 class Order {
   constructor(productsIdList) {
     this.productsIdList = productsIdList;
-    this.productsList = this.productsIdList.map(this.getProductById);
+    this.productsList = this.productsIdList.map((id) =>
+      products.getProductById(id)
+    );
     this.amount = this.sumAmount();
-  }
-
-  getProductById(id) {
-    return products.list.find((product) => product.id === id);
   }
 
   sumAmount() {
@@ -104,11 +102,21 @@ const nl = `
 
 /* 
 
+  STORAGE
+*/
+const ls = localStorage;
+
+const updLs = (key, value) => {
+  ls.setItem(key, value);
+};
+
+/* 
+
   ESTADO
 */
 
 const state = {
-  cart: new Order([]),
+  cart: JSON.parse(ls.getItem("cart")) || new Order([]),
 };
 
 /* 
@@ -148,10 +156,10 @@ const cardTemplate = ({ id, title, description, price }) => {
   return card;
 };
 
-const renderOrder = (order) => {
+const renderOrder = () => {
   $modalContent.innerHTML = "";
-  $modalContent.appendChild(orderTemplate(order));
-  $cartBtn.textContent = `$ ${order.amount} 🛒`;
+  $modalContent.appendChild(orderTemplate(state.cart));
+  $cartBtn.textContent = `$ ${state.cart.amount} 🛒`;
 };
 
 const orderTemplate = ({ productsList, amount }) => {
@@ -224,7 +232,8 @@ const removeFromCart = (row) => {
 
 const updateCartState = (order) => {
   state.cart = order;
-  renderOrder(order);
+  ls.setItem("cart", JSON.stringify(state.cart));
+  renderOrder();
 };
 
 const deliverOrder = (order) => {
@@ -277,12 +286,15 @@ $cartBtn.addEventListener("click", (e) => {
   $modal.style.display = "block";
 });
 
+document.addEventListener("DOMContentLoaded", (e) => {
+  renderShop();
+  renderOrder(state.cart);
+});
+
 /* 
 
   ZONA DE EJECUCIÓN INICIAL
 */
-
-renderShop();
 
 /*
 
