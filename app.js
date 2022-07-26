@@ -135,10 +135,12 @@ const cardTemplate = ({ id, title, description, price }) => {
   const card = document.createElement("article");
   card.classList.add("card", "textfield");
   const elements = `
-  <div class="flex-col-center">
+  <div class="flex-row-center card-container">
+  <div class="card-info">
     <h3>${title}</h3>
     <p>${description}</p>
-    <h4>$ ${price}</h4>
+    <h3>$ ${price}</h3>
+  </div>
     <a href="" id="${id}" class="add-btn btn-primary">Añadir al carrito</a>
   </div>
   `;

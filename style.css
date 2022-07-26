@@ -27,6 +27,7 @@ HTML {
 
 main {
   padding: 0px 15% 1.5rem 15%;
+  margin-top: 1.5rem;
 }
 
 /* UTILITY */
@@ -36,7 +37,6 @@ main {
 }
 
 .flex-col-center {
-  margin: 1.5rem 0px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -44,6 +44,12 @@ main {
 
 .flex-col-center > * {
   margin-bottom: 1rem;
+}
+
+.flex-row-center {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .btn-primary {
@@ -55,6 +61,7 @@ main {
 
   color: var(--highlight-800);
   font-weight: 600;
+  text-align: center;
 }
 
 .btn-primary:hover {
@@ -119,29 +126,32 @@ main {
 }
 
 .shop {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
+  margin-top: 1.5rem;
+  min-width: 80%;
 }
 
 .card {
-  max-width: 30%;
+  min-width: 100%;
 }
 
-.card > div {
+.card-container {
   margin: 0;
-  padding: 2rem;
-  height: 100%;
+  padding: 1rem 2rem;
+  width: 100%;
+  justify-content: space-between;
 }
 
-.card > div > * {
-  margin: 0.5rem;
-  text-align: center;
+.card-info {
+  margin: 0.5rem 0px;
+  width: 70%;
 }
 
-.card h4 {
-  margin-top: auto;
+.card-info > * {
+  margin-bottom: 0.5rem;
+}
+
+.add-btn {
+  min-width: 20%;
 }
 
 .order-ticket {
