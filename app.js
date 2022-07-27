@@ -3,7 +3,7 @@
   CLASES
 */
 class Product {
-  constructor(id, title, description, price, qty = 0) {
+  constructor(id, title, description, price, qty = 1) {
     this.id = id;
     this.title = title;
     this.description = description;
@@ -14,18 +14,31 @@ class Product {
 
 class Order {
   constructor(productsIdList) {
-    this.productsIdList = productsIdList;
-    this.productsList = this.productsIdList.map((id) =>
-      products.getProductById(id)
-    );
-    this.amount = this.sumAmount();
+    this.idList = productsIdList;
   }
 
-  sumAmount() {
-    return this.productsIdList.reduce(
-      (acc, cur) => acc + products.list[cur].price,
-      0
-    );
+  get amount() {
+    return this.idList.reduce((acc, cur) => acc + products.list[cur].price, 0);
+  }
+
+  get productsList() {
+    const productsList = [];
+    this.idList.forEach((id) => {
+      const isInCart = productsList.some((product) => product.id === id);
+      if (isInCart) {
+        const productIndex = productsList.findIndex(
+          (product) => product.id === id
+        );
+        productsList[productIndex].qty++;
+      } else {
+        productsList.push(Order.buildProduct(products.getProductById(id)));
+      }
+    });
+    return productsList;
+  }
+
+  static buildProduct({ id, title, description, price }) {
+    return new Product(id, title, description, price);
   }
 }
 
@@ -35,7 +48,7 @@ class Order {
   Simula ser la API de una base de datos
 */
 const products = {
-  list: JSON.parse(localStorage.getItem("products-list")) || [
+  list: JSON.parse(localStorage.getItem("products-list")) ?? [
     {
       id: 0,
       title: "Hamburguesa Basic Simple",
@@ -95,18 +108,11 @@ const msg = {
 
 /* 
 
-  VARIABLES GLOBALES
-*/
-const nl = `
-`;
-
-/* 
-
   ESTADO
 */
 
 const state = {
-  cart: JSON.parse(localStorage.getItem("cart")) || new Order([]),
+  cart: new Order(JSON.parse(localStorage.getItem("cart")) ?? []),
 };
 
 /* 
@@ -114,7 +120,7 @@ const state = {
   ELEMENTOS DEL DOM
 */
 const $modal = document.getElementById("modal");
-const $modalContent = document.getElementById("modal-content");
+const $cart = document.getElementById("modal-content");
 const $cartBtn = document.getElementById("cart-btn");
 const $shop = document.getElementById("shop");
 
@@ -124,6 +130,7 @@ const $shop = document.getElementById("shop");
 */
 
 const renderShop = () => {
+  $shop.innerHTML = "";
   products.list.forEach((product) => {
     $shop.appendChild(cardTemplate(product));
   });
@@ -132,64 +139,89 @@ const renderShop = () => {
 const cardTemplate = ({ id, title, description, price }) => {
   const card = document.createElement("article");
   card.classList.add("card", "textfield");
-  const elements = `
+  const content = `
   <div class="flex-row-center card-container">
   <div class="card-info">
     <h3>${title}</h3>
     <p>${description}</p>
-    <h3>$ ${price}</h3>
+    <h3 class="price-tag">$ ${price}</h3>
   </div>
-    <a href="" id="${id}" class="add-btn btn-primary">Añadir al carrito</a>
+    <a href="" data-product-id="${id}" class="add-btn btn-primary">Añadir al carrito</a>
   </div>
   `;
-  card.innerHTML = elements;
+  card.innerHTML = content;
+
+  if (!products.checkStock(id)) {
+    const anchor = card.getElementsByTagName("a")[0];
+    anchor.classList.add("btn-disabled");
+    anchor.textContent = "Sin Stock";
+  }
   return card;
 };
 
 const renderOrder = () => {
-  $modalContent.innerHTML = "";
-  $modalContent.appendChild(orderTemplate(state.cart));
+  $cart.innerHTML = "";
+  $cart.appendChild(orderTemplate(state.cart));
   $cartBtn.textContent = `$ ${state.cart.amount} 🛒`;
 };
 
 const orderTemplate = ({ productsList, amount }) => {
-  const orderTemplate = document.createElement("div");
-  orderTemplate.classList.add("order-ticket");
+  const $orderTemplate = document.createElement("div");
+  $orderTemplate.classList.add("order-ticket");
   const content = `
     <h2>Tu pedido:</h2>
-    <h2 id="order-price">$ ${amount} </h2>
-    <a href="" id="buy-btn" class="buy-btn btn-primary">Pagar💰</a>
+    <h2 class="order-price">$ ${amount} </h2>
     <h3>Detalle:</h3>
+    <h3 class="empty-msg text-center">${msg.empty}</h3>
+    
   `;
+  const $detail = detailTemplate(productsList);
+  $orderTemplate.innerHTML = content;
 
-  orderTemplate.innerHTML = content;
-  orderTemplate.appendChild(detailTemplate(productsList));
+  if ($detail) {
+    $orderTemplate.replaceChild(
+      $detail,
+      $orderTemplate.getElementsByClassName("empty-msg")[0]
+    );
 
-  return orderTemplate;
+    const $orderBtns = document.createElement("div");
+    $orderBtns.classList.add("order-btns");
+    $orderBtns.innerHTML = `
+      <a href="" id="buy-btn" class="btn-primary">Pagar💰</a>
+      <a href="" id="clear-btn" class="btn-primary order-btn">Limpiar🧹</a>
+    `;
+    $orderTemplate.appendChild($orderBtns);
+  }
+
+  return $orderTemplate;
 };
 
 const detailTemplate = (productsList) => {
-  const list = document.createElement("table");
-  list.classList.add("detail-table");
+  const $orderDetail = document.createElement("table");
+  if (productsList.length === 0) return;
+
+  $orderDetail.classList.add("detail-table");
   const listHeader = document.createElement("tr");
   listHeader.innerHTML = `
-  <th>#</th>
   <th>Producto</th>
-  <th>Precio</th>
+  <th>Cantidad</th>
+  <th>Unitario</th>
+  <th>Total</th>
   <th></th>
   `;
-  list.appendChild(listHeader);
-  productsList.forEach((product, index) => {
+  $orderDetail.appendChild(listHeader);
+  productsList.forEach((product) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-    <td>${index + 1}</td>
     <td>${product.title}</td>
-    <td>$ ${product.price}</td
-    <td><a href="" class="remove-cart-btn" data-row="${index}">❌</td
+    <td>${product.qty}</td>
+    <td>$ ${product.price}</td>
+    <td>$ ${product.price * product.qty}</td>
+    <a href="" data-product-id="${product.id}" class="remove-btn">❌</a>
     `;
-    list.appendChild(row);
+    $orderDetail.appendChild(row);
   });
-  return list;
+  return $orderDetail;
 };
 
 /*
@@ -202,28 +234,36 @@ const addToCart = (id) => {
     alert(msg.noStock);
     return;
   }
-  const newOrder = new Order([...state.cart.productsIdList, id]);
   products.updateStock(id, -1);
-  updateCartState(newOrder);
-  console.log(`Añadido al carrito: ${products.getProductById(id).title}`);
+  console.log(`Adding: ${products.getProductById(id).title}`);
+  updateState([...state.cart.idList, id]);
 };
 
-const removeFromCart = (row) => {
-  const idList = state.cart.productsIdList.map((e) => e);
-  const id = idList[row];
-  if (idList[row] === undefined) return;
+const removeFromCart = (id) => {
+  const productsList = state.cart.idList.map((x) => x);
+  productsList.splice(productsList.lastIndexOf(id), 1);
 
-  idList.splice(row, 1);
-  const newOrder = new Order(idList);
   products.updateStock(id, 1);
-  updateCartState(newOrder);
-  console.log(`Eliminado del carrito: ${products.getProductById(id).title}`);
+  console.log(`Removing: ${products.getProductById(id).title}`);
+  updateState(productsList);
 };
 
-const updateCartState = (order) => {
-  state.cart = order;
-  localStorage.setItem("cart", JSON.stringify(state.cart));
+const clearCart = () => {
+  let count = 0;
+  state.cart.productsList.forEach((product) => {
+    products.updateStock(product.id, product.qty);
+    count += product.qty;
+  });
+  console.log(`Clearing cart. Removing ${count} products.`);
+  updateState([]);
+};
+
+const updateState = (idList) => {
+  state.cart = new Order(idList);
+  console.log(state.cart.productsList);
+  localStorage.setItem("cart", JSON.stringify(state.cart.idList));
   localStorage.setItem("products-list", JSON.stringify(products.list));
+  renderShop();
   renderOrder();
 };
 
@@ -234,7 +274,7 @@ const deliverOrder = (order) => {
     return;
   }
   alert(msg.deliver(amount));
-  updateCartState(new Order([]));
+  updateState([]);
   $modal.style.display = "none";
 };
 
@@ -242,32 +282,6 @@ const deliverOrder = (order) => {
 
   LISTENERS
 */
-$modal.addEventListener("click", (e) => {
-  if (e.target == modal) {
-    $modal.style.display = "none";
-  }
-});
-
-$modalContent.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (e.target.classList.contains("remove-cart-btn")) {
-    const rowId = parseInt(e.target.getAttribute("data-row"));
-    removeFromCart(rowId);
-  }
-
-  if (e.target.id == "buy-btn") {
-    deliverOrder(state.cart);
-  }
-});
-
-$shop.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (e.target.classList.contains("add-btn")) {
-    const id = parseInt(e.target.getAttribute("id"));
-    addToCart(id);
-  }
-});
-
 $cartBtn.addEventListener("click", (e) => {
   e.preventDefault();
   if (state.cart.amount === 0) {
@@ -277,29 +291,52 @@ $cartBtn.addEventListener("click", (e) => {
   $modal.style.display = "block";
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  renderShop();
-  renderOrder(state.cart);
+$modal.addEventListener("click", (e) => {
+  if (e.target.id === "modal") {
+    $modal.style.display = "none";
+  }
 });
 
-/* 
+$cart.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (e.target.classList.contains("remove-btn")) {
+    const productId = parseInt(e.target.getAttribute("data-product-id"));
+    removeFromCart(productId);
+    return;
+  }
 
-  ZONA DE EJECUCIÓN INICIAL
-*/
+  if (e.target.id === "buy-btn") {
+    deliverOrder(state.cart);
+    return;
+  }
+
+  if (e.target.id === "clear-btn") {
+    clearCart();
+    return;
+  }
+});
+
+$shop.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (e.target.classList.contains("add-btn")) {
+    const id = parseInt(e.target.getAttribute("data-product-id"));
+    addToCart(id);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderShop();
+  renderOrder();
+});
 
 /*
 
 TESTING
 */
 
-console.log("---------------------TESTING--------------------");
 /* 
-const testOrder = new Order([0, 2, 1, 2]);
-console.log(testOrder);
+console.log("---------------------TESTING--------------------");
 
-
-const testStock = () => {
-  products.updStock(1, -1);
-  console.log(products.list[1].stock);
-};
-*/
+state.cart = new Order([1, 0, 1]);
+console.log(state.cart.idList);
+console.log(state.cart.productsList);*/
