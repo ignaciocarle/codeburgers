@@ -136,7 +136,7 @@ const renderShop = () => {
   });
 };
 
-const cardTemplate = ({ id, title, description, price }) => {
+const cardTemplate = ({ id, title, description, price, stock }) => {
   const card = document.createElement("article");
   card.classList.add("card", "textfield");
   const content = `
@@ -145,8 +145,11 @@ const cardTemplate = ({ id, title, description, price }) => {
     <h3>${title}</h3>
     <p>${description}</p>
     <h3 class="price-tag">$ ${price}</h3>
-  </div>
-    <a href="" data-product-id="${id}" class="add-btn btn-primary">Añadir al carrito</a>
+    </div>
+    <div class="card-actions">
+      <a href="" data-product-id="${id}" class="add-btn btn-primary">Añadir al carrito</a>
+      <h5> Stock: ${stock}</h5>
+    </div>
   </div>
   `;
   card.innerHTML = content;
