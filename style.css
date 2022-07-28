@@ -133,7 +133,8 @@ main {
 .modal-content {
   margin: 20vh auto;
   padding: 20px;
-  width: 60%;
+  min-width: 40%;
+  max-width: 500px;
 }
 
 .order-ticket {
