@@ -6,8 +6,8 @@
   --primary-200: #f0f8ff;
   --primary-700: #6495ed;
   --primary-1000: #244177;
-  --alert-primary-200: #ffe6e6;
-  --alert-primary-600: #ed5e5e;
+  --warning-200: #ffe6e6;
+  --warning-700: #ed5e5e;
 }
 
 * {
@@ -24,7 +24,7 @@ a {
 /* ELEMENTS */
 
 HTML {
-  background-color: var(--primary-200);
+  background: var(--primary-200);
 }
 
 main {
@@ -32,7 +32,12 @@ main {
   margin-top: 1.5rem;
 }
 
-/* UTILITY */
+/*
+
+
+
+UTILITY
+*/
 
 .hidden {
   display: none;
@@ -57,7 +62,7 @@ main {
 .btn-primary {
   padding: 0.5rem 1rem;
 
-  background-color: var(--primary-700);
+  background: var(--primary-700);
   border: var(--primary-700) solid 3px;
   border-radius: 1rem;
 
@@ -67,23 +72,23 @@ main {
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-200);
+  background: var(--primary-200);
   color: var(--primary-700);
 }
 
 .btn-disabled {
-  background-color: var(--alert-primary-600);
-  border-color: var(--alert-primary-600);
-  color: var(--alert-primary-200);
+  background: var(--warning-700);
+  border-color: var(--warning-700);
+  color: var(--warning-200);
 }
 
 .btn-disabled:hover {
-  background-color: var(--alert-primary-200);
-  color: var(--alert-primary-600);
+  background: var(--warning-200);
+  color: var(--warning-700);
 }
 
 .textfield {
-  background-color: var(--primary-100);
+  background: var(--primary-100);
   border-radius: 2em;
 }
 
@@ -91,17 +96,37 @@ main {
   text-align: center;
 }
 
-/* CLASSES */
+.toast-warning {
+  background: var(--warning-700) !important;
+}
+
+@media only screen and (max-width: 600px) {
+  .toastify-left,
+  .toastify-right {
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    max-width: fit-content !important;
+  }
+}
+
+/* 
+
+
+
+CLASSES
+*/
 
 .header {
-  padding: 1rem 15%+1.5rem;
+  padding: 1rem 15%;
 
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
 
-  background-color: var(--primary-700);
+  background: var(--primary-700);
 }
 
 .header > * {
@@ -127,14 +152,14 @@ main {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content {
   margin: 20vh auto;
   padding: 20px;
   min-width: 40%;
-  max-width: 500px;
+  max-width: 700px;
 }
 
 .order-ticket {
@@ -160,11 +185,11 @@ main {
 }
 
 .detail-table > tr:nth-child(odd) {
-  background-color: var(--primary-200);
+  background: var(--primary-200);
 }
 
 .detail-table > tr:nth-child(1) {
-  background-color: var(--primary-700);
+  background: var(--primary-700);
 }
 
 .detail-table th,
@@ -181,13 +206,13 @@ td {
   text-align: end;
 }
 
-.order-btns {
+.cart-btns {
   display: flex;
   padding: 1rem 0px;
   justify-content: center;
 }
 
-.order-btns > a {
+.cart-btns > a {
   margin: 0 1.5rem;
 }
 
@@ -234,6 +259,10 @@ TESTING */
 
 .tb1 {
   border: red dashed 2px;
+}
+
+.tbg {
+  background: red;
 }
 
 .tb2 {

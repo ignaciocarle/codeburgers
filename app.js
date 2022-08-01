@@ -12,7 +12,7 @@ class Product {
   }
 }
 
-class Order {
+class Cart {
   constructor(productsIdList) {
     this.idList = productsIdList;
   }
@@ -31,7 +31,7 @@ class Order {
         );
         productsList[productIndex].qty++;
       } else {
-        productsList.push(Order.buildProduct(products.getProductById(id)));
+        productsList.push(Cart.buildProduct(products.getProductById(id)));
       }
     });
     return productsList;
@@ -93,16 +93,21 @@ const products = {
 };
 
 const msg = {
-  welcome: "Bienvenide a Codeburguers, deseas hacer un pedido?",
   dismiss: "Muchas gracias, vuelva prontos!",
-  bounce: "Otra vez será, vuelva prontos!",
-  invalidInput: "Entrada incorrecta por favor intenta de nuevo",
-  addMore: "Desea añadir otro producto?",
   empty: "Tu pedido está vacío.",
-  noStock: "No nos queda stock de este producto",
+  noStock: "No nos queda stock de este producto.",
+  cartCleared: `Has vaciado el carrito.`,
   deliver(amount) {
     return `Son $${amount}, disfrute su comida.
     ${this.dismiss}`;
+  },
+  productAdded(productName) {
+    return `Has añadido:
+    1 x ${productName} al carrito.`;
+  },
+  productRemoved(productName) {
+    return `Has quitado:
+    1 x ${productName} del carrito.`;
   },
 };
 
@@ -112,7 +117,7 @@ const msg = {
 */
 
 const state = {
-  cart: new Order(JSON.parse(localStorage.getItem("cart")) ?? []),
+  cart: new Cart(JSON.parse(localStorage.getItem("cart")) ?? []),
 };
 
 /* 
@@ -129,14 +134,21 @@ const $shop = document.getElementById("shop");
   FUNCIONES DE RENDERIZADO
 */
 
-const renderShop = () => {
+/**
+ * For each product in the products array, append a card to the shop div.
+ */
+function renderShop() {
   $shop.innerHTML = "";
   products.list.forEach((product) => {
     $shop.appendChild(cardTemplate(product));
   });
-};
+}
 
-const cardTemplate = ({ id, title, description, price, stock }) => {
+/**
+ * @param product a product form the DB.
+ * @returns A card element with the product information.
+ */
+function cardTemplate({ id, title, description, price, stock }) {
   const card = document.createElement("article");
   card.classList.add("card", "textfield");
   const content = `
@@ -160,46 +172,53 @@ const cardTemplate = ({ id, title, description, price, stock }) => {
     anchor.textContent = "Sin Stock";
   }
   return card;
-};
+}
 
-const renderOrder = () => {
+/**
+ * Render the cart template on a modal element
+ * and the price tag on the header's cart button
+ */
+function renderCart() {
   $cart.innerHTML = "";
-  $cart.appendChild(orderTemplate(state.cart));
+  $cart.appendChild(cartTemplate(state.cart));
   $cartBtn.textContent = `$ ${state.cart.amount} 🛒`;
-};
+}
 
-const orderTemplate = ({ productsList, amount }) => {
-  const $orderTemplate = document.createElement("div");
-  $orderTemplate.classList.add("order-ticket");
+/**
+ * Creates a template for the order section of the page.
+ * @returns A div element with the class order-ticket.
+ */
+function cartTemplate({ productsList, amount }) {
+  const $cartTemplate = document.createElement("div");
+  $cartTemplate.classList.add("order-ticket");
   const content = `
     <h2>Tu pedido:</h2>
     <h2 class="order-price">$ ${amount} </h2>
     <h3>Detalle:</h3>
     <h3 class="empty-msg text-center">${msg.empty}</h3>
-    
   `;
   const $detail = detailTemplate(productsList);
-  $orderTemplate.innerHTML = content;
+  $cartTemplate.innerHTML = content;
 
   if ($detail) {
-    $orderTemplate.replaceChild(
+    $cartTemplate.replaceChild(
       $detail,
-      $orderTemplate.getElementsByClassName("empty-msg")[0]
+      $cartTemplate.getElementsByClassName("empty-msg")[0]
     );
 
-    const $orderBtns = document.createElement("div");
-    $orderBtns.classList.add("order-btns");
-    $orderBtns.innerHTML = `
+    const $cartBtns = document.createElement("div");
+    $cartBtns.classList.add("cart-btns");
+    $cartBtns.innerHTML = `
       <a href="" id="buy-btn" class="btn-primary">Pagar💰</a>
       <a href="" id="clear-btn" class="btn-primary order-btn">Limpiar🧹</a>
     `;
-    $orderTemplate.appendChild($orderBtns);
+    $cartTemplate.appendChild($cartBtns);
   }
 
-  return $orderTemplate;
-};
+  return $cartTemplate;
+}
 
-const detailTemplate = (productsList) => {
+function detailTemplate(productsList) {
   const $orderDetail = document.createElement("table");
   if (productsList.length === 0) return;
 
@@ -225,33 +244,56 @@ const detailTemplate = (productsList) => {
     $orderDetail.appendChild(row);
   });
   return $orderDetail;
-};
+}
+
+function alertToast(text, className) {
+  const config = {
+    text: text,
+    className: className,
+    style: {
+      maxWidth: "17%",
+      background: "var(--primary-700)",
+      borderRadius: "1rem",
+    },
+    offset: {
+      y: "25vh",
+    },
+  };
+
+  Toastify(config).showToast();
+}
 
 /*
 
   FUNCIONES OPERATIVAS
 */
 
-const addToCart = (id) => {
+function addToCart(id) {
   if (!products.checkStock(id)) {
-    alert(msg.noStock);
+    alertToast(msg.noStock, "toast-warning");
     return;
   }
-  products.updateStock(id, -1);
-  console.log(`Adding: ${products.getProductById(id).title}`);
-  updateState([...state.cart.idList, id]);
-};
-
-const removeFromCart = (id) => {
   const productsList = state.cart.idList.map((x) => x);
+  const productName = products.getProductById(id).title;
+
+  products.updateStock(id, -1);
+  console.log(`Adding: ${productName}`);
+  updateState([...productsList, id]);
+  alertToast(msg.productAdded(productName));
+}
+
+function removeFromCart(id) {
+  const productsList = state.cart.idList.map((x) => x);
+  const productName = products.getProductById(id).title;
+
   productsList.splice(productsList.lastIndexOf(id), 1);
-
   products.updateStock(id, 1);
-  console.log(`Removing: ${products.getProductById(id).title}`);
+  console.log(`Removing: ${productName}`);
   updateState(productsList);
-};
+  alertToast(msg.productRemoved(productName), "toast-warning");
+}
 
-const clearCart = () => {
+function clearCart() {
   let count = 0;
   state.cart.productsList.forEach((product) => {
     products.updateStock(product.id, product.qty);
@@ -259,77 +301,87 @@ const clearCart = () => {
   });
   console.log(`Clearing cart. Removing ${count} products.`);
   updateState([]);
-};
+  alertToast(msg.cartCleared, "toast-warning");
+}
 
-const updateState = (idList) => {
-  state.cart = new Order(idList);
+function updateState(idList) {
+  state.cart = new Cart(idList);
   console.log(state.cart.productsList);
   localStorage.setItem("cart", JSON.stringify(state.cart.idList));
   localStorage.setItem("products-list", JSON.stringify(products.list));
   renderShop();
-  renderOrder();
-};
+  renderCart();
+}
 
-const deliverOrder = (order) => {
-  const amount = order.amount;
+function deliverOrder(cart) {
+  const amount = cart.amount;
   if (amount <= 0) {
-    alert(msg.empty);
+    alertToast(msg.empty, "toast-warning");
     return;
   }
-  alert(msg.deliver(amount));
+  alertToast(msg.deliver(amount));
   updateState([]);
   $modal.style.display = "none";
-};
+}
 
 /* 
 
   LISTENERS
 */
-$cartBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (state.cart.amount === 0) {
-    alert(msg.empty);
-    return;
-  }
-  $modal.style.display = "block";
-});
 
-$modal.addEventListener("click", (e) => {
-  if (e.target.id === "modal") {
-    $modal.style.display = "none";
-  }
-});
+function loadEventListeners() {
+  $cartBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (state.cart.amount === 0) {
+      alertToast(msg.empty, "toast-warning");
+      return;
+    }
+    $modal.style.display = "block";
+  });
 
-$cart.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (e.target.classList.contains("remove-btn")) {
-    const productId = parseInt(e.target.getAttribute("data-product-id"));
-    removeFromCart(productId);
-    return;
-  }
+  $modal.addEventListener("click", (e) => {
+    if (e.target.id === "modal") {
+      $modal.style.display = "none";
+    }
+  });
 
-  if (e.target.id === "buy-btn") {
-    deliverOrder(state.cart);
-    return;
-  }
+  $cart.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (e.target.classList.contains("remove-btn")) {
+      const productId = parseInt(e.target.getAttribute("data-product-id"));
+      removeFromCart(productId);
+      return;
+    }
 
-  if (e.target.id === "clear-btn") {
-    clearCart();
-    return;
-  }
-});
+    if (e.target.id === "buy-btn") {
+      deliverOrder(state.cart);
+      return;
+    }
 
-$shop.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (e.target.classList.contains("add-btn")) {
-    const id = parseInt(e.target.getAttribute("data-product-id"));
-    addToCart(id);
-  }
-});
+    if (e.target.id === "clear-btn") {
+      clearCart();
+      return;
+    }
+  });
+
+  $shop.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (e.target.classList.contains("add-btn")) {
+      const id = parseInt(e.target.getAttribute("data-product-id"));
+      addToCart(id);
+    }
+  });
+}
+
+/*
+
+EJECUCIÓN INICAL
+*/
 
 document.addEventListener("DOMContentLoaded", () => {
   renderShop();
-  renderOrder();
+  renderCart();
+  loadEventListeners();
 });
 
 /*
@@ -340,6 +392,9 @@ TESTING
 /* 
 console.log("---------------------TESTING--------------------");
 
-state.cart = new Order([1, 0, 1]);
-console.log(state.cart.idList);
-console.log(state.cart.productsList);*/
+const $testBtn = document.getElementById("toast");
+
+$testBtn.addEventListener("click", () => {
+  alertToast("Hola manola", "toast-warning");
+});
+*/
