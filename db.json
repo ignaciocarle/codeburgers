@@ -1,0 +1,32 @@
+{
+  "products": [
+    {
+      "id": 0,
+      "title": "Hamburguesa Basic Simple",
+      "description": "Una carne, doble cheddar y salsa",
+      "price": 500,
+      "stock": 50
+    },
+    {
+      "id": 1,
+      "title": "Hamburguesa Basic Doble",
+      "description": "Dos carnes, cuadruple cheddar y salsa",
+      "price": 700,
+      "stock": 50
+    },
+    {
+      "id": 2,
+      "title": "Hamburguesa Absolute Doble",
+      "description": "Dos carnes, cuadruple cheddar, bacon, cebolla crispy y salsa",
+      "price": 850,
+      "stock": 1
+    },
+    {
+      "id": 3,
+      "title": "Hamburguesa Absolute Cerdo",
+      "description": "Dos carnes de cerdo, cuadruple cheddar, bacon, cebolla crispy y salsa",
+      "price": 800,
+      "stock": 0
+    }
+  ]
+}

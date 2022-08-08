@@ -48,38 +48,8 @@ class Cart {
   Simula ser la API de una base de datos
 */
 const products = {
-  list: JSON.parse(localStorage.getItem("products-list")) ?? [
-    {
-      id: 0,
-      title: "Hamburguesa Basic Simple",
-      description: "Una carne, doble cheddar y salsa",
-      price: 500,
-      stock: 50,
-    },
-    {
-      id: 1,
-      title: "Hamburguesa Basic Doble",
-      description: "Dos carnes, cuadruple cheddar y salsa",
-      price: 700,
-      stock: 50,
-    },
-    {
-      id: 2,
-      title: "Hamburguesa Absolute Doble",
-      description:
-        "Dos carnes, cuadruple cheddar, bacon, cebolla crispy y salsa",
-      price: 850,
-      stock: 1,
-    },
-    {
-      id: 3,
-      title: "Hamburguesa Absolute Cerdo",
-      description:
-        "Dos carnes de cerdo, cuadruple cheddar, bacon, cebolla crispy y salsa",
-      price: 800,
-      stock: 0,
-    },
-  ],
+  list: [],
+
   checkStock(id) {
     return this.list[id].stock >= 1;
   },
@@ -91,6 +61,14 @@ const products = {
     return this.list.find((product) => product.id === id);
   },
 };
+
+async function getProductsFromDb() {
+  const resp = await fetch("./db.json");
+  const db = await resp.json();
+  const productsList = db.products;
+  products.list =
+    JSON.parse(localStorage.getItem("products-list")) ?? productsList;
+}
 
 const msg = {
   dismiss: "Muchas gracias, vuelva prontos!",
@@ -133,6 +111,10 @@ const $shop = document.getElementById("shop");
 
   FUNCIONES DE RENDERIZADO
 */
+
+function renderXChar(length, char) {
+  return new Array(length).fill(char).join("");
+}
 
 /**
  * For each product in the products array, append a card to the shop div.
@@ -245,6 +227,8 @@ function detailTemplate(productsList) {
   });
   return $orderDetail;
 }
+
+function orderTemplate() {} //aca poner algo para que se muestre al final del pedido
 
 function alertToast(text, className) {
   const config = {
@@ -379,9 +363,11 @@ EJECUCIÓN INICAL
 */
 
 document.addEventListener("DOMContentLoaded", () => {
-  renderShop();
-  renderCart();
-  loadEventListeners();
+  getProductsFromDb().then(() => {
+    renderShop();
+    renderCart();
+    loadEventListeners();
+  });
 });
 
 /*
