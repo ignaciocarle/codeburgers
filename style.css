@@ -6,6 +6,8 @@
   --primary-200: #f0f8ff;
   --primary-700: #6495ed;
   --primary-1000: #244177;
+  --success-200: #d6f5d6;
+  --success-700: #40bf40;
   --warning-200: #ffe6e6;
   --warning-700: #ed5e5e;
 }
@@ -96,6 +98,10 @@ UTILITY
 
 .text-center {
   text-align: center;
+}
+
+.toast-success {
+  background: var(--success-700) !important;
 }
 
 .toast-warning {

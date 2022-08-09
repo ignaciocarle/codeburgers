@@ -1,5 +1,5 @@
 /*
-
+_______________________________________________________________________________
   CLASES
 */
 class Product {
@@ -43,7 +43,7 @@ class Cart {
 }
 
 /* 
-
+_______________________________________________________________________________
   BASE DE DATOS
   Simula ser la API de una base de datos
 */
@@ -63,11 +63,15 @@ const products = {
 };
 
 async function getProductsFromDb() {
+  const productList = localStorage.getItem("products-list");
+  if (productList) {
+    products.list = JSON.parse(productList);
+    return;
+  }
+
   const resp = await fetch("./db.json");
   const db = await resp.json();
-  const productsList = db.products;
-  products.list =
-    JSON.parse(localStorage.getItem("products-list")) ?? productsList;
+  products.list = db.products;
 }
 
 const msg = {
@@ -90,7 +94,7 @@ const msg = {
 };
 
 /* 
-
+_______________________________________________________________________________
   ESTADO
 */
 
@@ -99,25 +103,77 @@ const state = {
 };
 
 /* 
-
+_______________________________________________________________________________
   ELEMENTOS DEL DOM
 */
 const $modal = document.getElementById("modal");
-const $cart = document.getElementById("modal-content");
+const $cart = document.getElementById("cart");
 const $cartBtn = document.getElementById("cart-btn");
 const $shop = document.getElementById("shop");
 
-/*
+/* 
+_______________________________________________________________________________
+  LISTENERS
+*/
 
+function loadEventListeners() {
+  $cartBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (state.cart.amount === 0) {
+      alertToast(msg.empty, "toast-warning");
+      return;
+    }
+    $modal.style.display = "block";
+  });
+
+  $modal.addEventListener("click", (e) => {
+    if (e.target.id === "modal") {
+      $modal.style.display = "none";
+    }
+  });
+
+  $cart.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (e.target.classList.contains("remove-btn")) {
+      const productId = parseInt(e.target.getAttribute("data-product-id"));
+      removeFromCart(productId);
+      return;
+    }
+
+    if (e.target.id === "buy-btn") {
+      deliverOrder();
+      return;
+    }
+
+    if (e.target.id === "clear-btn") {
+      clearCart();
+      return;
+    }
+  });
+
+  $shop.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (e.target.classList.contains("add-btn")) {
+      const id = parseInt(e.target.getAttribute("data-product-id"));
+      addToCart(id);
+    }
+  });
+}
+
+/*
+_______________________________________________________________________________
   FUNCIONES DE RENDERIZADO
 */
 
-function renderXChar(length, char) {
-  return new Array(length).fill(char).join("");
+/**
+ * Render the price tag on the header's cart button.
+ */
+function updateCartBtn() {
+  $cartBtn.textContent = `$ ${state.cart.amount} 🛒`;
 }
 
 /**
- * For each product in the products array, append a card to the shop div.
+ * Render the shop div iterating through the DB's products list.
  */
 function renderShop() {
   $shop.innerHTML = "";
@@ -127,7 +183,7 @@ function renderShop() {
 }
 
 /**
- * @param product a product form the DB.
+ * @param product - A product form the DB.
  * @returns A card element with the product information.
  */
 function cardTemplate({ id, title, description, price, stock }) {
@@ -158,17 +214,16 @@ function cardTemplate({ id, title, description, price, stock }) {
 
 /**
  * Render the cart template on a modal element
- * and the price tag on the header's cart button
  */
 function renderCart() {
   $cart.innerHTML = "";
   $cart.appendChild(cartTemplate(state.cart));
-  $cartBtn.textContent = `$ ${state.cart.amount} 🛒`;
 }
 
 /**
- * Creates a template for the order section of the page.
- * @returns A div element with the class order-ticket.
+ * Create a template for the order section of the page.
+ * @param cart - A Cart class instance.
+ * @returns A div element with the order details and actions.
  */
 function cartTemplate({ productsList, amount }) {
   const $cartTemplate = document.createElement("div");
@@ -200,6 +255,10 @@ function cartTemplate({ productsList, amount }) {
   return $cartTemplate;
 }
 
+/**
+ * @param productsList - An array of Products.
+ * @returns A table with the products in the order.
+ */
 function detailTemplate(productsList) {
   const $orderDetail = document.createElement("table");
   if (productsList.length === 0) return;
@@ -228,9 +287,13 @@ function detailTemplate(productsList) {
   return $orderDetail;
 }
 
-function orderTemplate() {} //aca poner algo para que se muestre al final del pedido
-
-function alertToast(text, className) {
+/**
+ * Create a toast notification using Toastify.
+ * @param text - The text to be displayed in the toast.
+ * @param className - The class name of the toast.
+ * @param duration - The duration of the toast in milliseconds.
+ */
+function alertToast(text, className, duration) {
   const config = {
     text: text,
     className: className,
@@ -242,16 +305,35 @@ function alertToast(text, className) {
     offset: {
       y: "25vh",
     },
+    duration: duration ?? 3000,
   };
 
   Toastify(config).showToast();
 }
 
 /*
-
+_______________________________________________________________________________
   FUNCIONES OPERATIVAS
 */
 
+/**
+ * Update the state of the cart, update Local Storage, then update UI elements.
+ * @param idList - An array of product ids.
+ */
+function updateState(idList) {
+  state.cart = new Cart(idList);
+  console.log(state.cart.productsList);
+  localStorage.setItem("cart", JSON.stringify(state.cart.idList));
+  localStorage.setItem("products-list", JSON.stringify(products.list));
+  updateCartBtn();
+  renderShop();
+  renderCart();
+}
+
+/**
+ * If the product is in stock, add it to the cart and update the stock.
+ * @param id - The id of the product to be added to the cart.
+ */
 function addToCart(id) {
   if (!products.checkStock(id)) {
     alertToast(msg.noStock, "toast-warning");
@@ -266,6 +348,10 @@ function addToCart(id) {
   alertToast(msg.productAdded(productName));
 }
 
+/**
+ * Remove a product from the cart and update stock.
+ * @param id - The id of the product to be removed from the cart.
+ */
 function removeFromCart(id) {
   const productsList = state.cart.idList.map((x) => x);
   const productName = products.getProductById(id).title;
@@ -277,6 +363,9 @@ function removeFromCart(id) {
   alertToast(msg.productRemoved(productName), "toast-warning");
 }
 
+/**
+ * Clear the cart and return items to stock.
+ */
 function clearCart() {
   let count = 0;
   state.cart.productsList.forEach((product) => {
@@ -288,99 +377,32 @@ function clearCart() {
   alertToast(msg.cartCleared, "toast-warning");
 }
 
-function updateState(idList) {
-  state.cart = new Cart(idList);
-  console.log(state.cart.productsList);
-  localStorage.setItem("cart", JSON.stringify(state.cart.idList));
-  localStorage.setItem("products-list", JSON.stringify(products.list));
-  renderShop();
-  renderCart();
-}
-
-function deliverOrder(cart) {
+/**
+ * If the cart is empty, show a warning message,
+ * otherwise show a success message and update the state.
+ */
+function deliverOrder() {
+  const cart = state.cart;
   const amount = cart.amount;
-  if (amount <= 0) {
+  if (cart.idList === []) {
     alertToast(msg.empty, "toast-warning");
     return;
   }
-  alertToast(msg.deliver(amount));
+  alertToast(msg.deliver(amount), "toast-success", 5000);
   updateState([]);
   $modal.style.display = "none";
 }
 
-/* 
-
-  LISTENERS
-*/
-
-function loadEventListeners() {
-  $cartBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (state.cart.amount === 0) {
-      alertToast(msg.empty, "toast-warning");
-      return;
-    }
-    $modal.style.display = "block";
-  });
-
-  $modal.addEventListener("click", (e) => {
-    if (e.target.id === "modal") {
-      $modal.style.display = "none";
-    }
-  });
-
-  $cart.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (e.target.classList.contains("remove-btn")) {
-      const productId = parseInt(e.target.getAttribute("data-product-id"));
-      removeFromCart(productId);
-      return;
-    }
-
-    if (e.target.id === "buy-btn") {
-      deliverOrder(state.cart);
-      return;
-    }
-
-    if (e.target.id === "clear-btn") {
-      clearCart();
-      return;
-    }
-  });
-
-  $shop.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (e.target.classList.contains("add-btn")) {
-      const id = parseInt(e.target.getAttribute("data-product-id"));
-      addToCart(id);
-    }
-  });
-}
-
 /*
-
-EJECUCIÓN INICAL
+_______________________________________________________________________________
+  EJECUCIÓN INICAL
 */
 
 document.addEventListener("DOMContentLoaded", () => {
   getProductsFromDb().then(() => {
+    updateCartBtn();
     renderShop();
     renderCart();
     loadEventListeners();
   });
 });
-
-/*
-
-TESTING
-*/
-
-/* 
-console.log("---------------------TESTING--------------------");
-
-const $testBtn = document.getElementById("toast");
-
-$testBtn.addEventListener("click", () => {
-  alertToast("Hola manola", "toast-warning");
-});
-*/
