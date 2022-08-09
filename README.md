@@ -3,10 +3,12 @@
 Codeburgers es un simulador de ecommerce creado con la finalidad de ser el trabajo final integrador del curso de Javascript de Coderhouse.
 
 El proyecto está realizado completamente con HTML, CSS y Javascript vanilla.
+Solo se hizo uso de la librería Toastify para generar alertas visuales no bloqueantes.
 
 ## Funcionalidad
 
 El simulador permite cargar productos al carrito y ver el mismo, teniendo la posibilidad de borrar un producto, borrar todos los productos, o finalizar la compra.
+Se maneja un stock que se actualiza a medida que se compran productos.
 
 ## Estructura
 
